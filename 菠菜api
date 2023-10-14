@@ -1,1 +1,400 @@
 
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from pandasai import PandasAI
+from pandasai.llm.openai import OpenAI
+#from pandasai.llm.open_assistant import OpenAssistant
+from matplotlib.font_manager import FontProperties
+
+
+# 農產品交易行情API接資料
+
+# In[6]:
+
+
+#  optimize
+
+import requests
+
+base_url = "https://data.coa.gov.tw/api/v1/AgriProductsTransType/"
+params = {"Start_time": "107.01.01", "End_time": "111.12.31", "CropName": "菠菜", "Page": 1, "api_key": ""}
+
+data_list = []  # 建立空的列表來存放資料
+
+while True:
+    response = requests.get(base_url, params=params)
+    if response.ok:
+        data_all = response.json()  # data_all 是原始response
+        data_list.extend(data_all['Data'])  # 將資料追加到列表中
+        if not data_all["Next"]:
+            break
+        params["Page"] += 1
+        params["Next"] = data_all["Next"]
+    else:
+        print("API request failed")
+        break
+
+# 最後，你可以使用 data_list 這個列表來處理所有獲取到的資料
+
+
+# In[5]:
+
+
+#讀取資料
+df_open= pd.read_csv(r'C:\Users\USER\python\dataanalysis\dataset\spinachdata_openmarket.csv')
+
+
+# In[6]:
+
+
+df_open
+
+
+# In[7]:
+
+
+get_ipython().system('python -m pip install mitosheet')
+
+
+# In[8]:
+
+
+get_ipython().system('python -m jupyter nbextension install --py --user mitosheet')
+get_ipython().system('python -m jupyter nbextension enable --py --user mitosheet')
+
+
+# In[9]:
+
+
+import mitosheet
+mitosheet.sheet(df_open, analysis_to_replay="id-srvynpxzag")
+
+
+# In[11]:
+
+
+from mitosheet.public.v3 import *; register_analysis("id-srvynpxzag");
+import pandas as pd
+
+# Pivoted df_open into df_open_pivot
+df_open_pivot = pd.DataFrame(data={})
+
+# Added column new-column-kixp
+df_open.insert(1, 'new-column-kixp', 0)
+
+# Renamed columns Month
+df_open.rename(columns={'new-column-kixp': 'Month'}, inplace=True)
+
+# Set formula of Month
+df_open['Month'] = MONTH(df_open['TransDate'])
+
+# Pivoted df_open into df_open_pivot
+tmp_df = df_open[['Month', 'CropName', 'Trans_Quantity']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['Month'],
+    columns=['CropName'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_open_pivot = pivot_table.reset_index()
+
+# Set formula of Trans_Quantity sum 菠菜-進口
+df_open_pivot['Trans_Quantity sum 菠菜-進口'] = FILLNAN(df_open_pivot['Trans_Quantity sum 菠菜-進口'],0)
+
+# Renamed columns 交易量菠菜-圓葉
+df_open_pivot.rename(columns={'Trans_Quantity sum 菠菜-圓葉': '交易量菠菜-圓葉'}, inplace=True)
+
+# Renamed columns  交易量菠菜-甜菠菜
+df_open_pivot.rename(columns={'Trans_Quantity sum 菠菜-甜菠菜': ' 交易量菠菜-甜菠菜'}, inplace=True)
+
+# Renamed columns  交易量菠菜-進口
+df_open_pivot.rename(columns={'Trans_Quantity sum 菠菜-進口': ' 交易量菠菜-進口'}, inplace=True)
+
+# Renamed columns 
+# 交易量菠菜-角葉
+df_open_pivot.rename(columns={'Trans_Quantity sum 菠菜-角葉': '\n交易量菠菜-角葉'}, inplace=True)
+
+# Renamed df_open_pivot to 各月份菠菜交易量
+各月份菠菜交易量 = df_open_pivot
+
+# Renamed columns 菠菜交易量-圓葉
+各月份菠菜交易量.rename(columns={'交易量菠菜-圓葉': '菠菜交易量-圓葉'}, inplace=True)
+
+# Renamed columns  菠菜交易量-甜菠菜
+各月份菠菜交易量.rename(columns={' 交易量菠菜-甜菠菜': ' 菠菜交易量-甜菠菜'}, inplace=True)
+
+# Renamed columns 
+# 交易量菠菜-角葉:
+# 交易量菠菜-角葉
+# 菠菜交易量-角葉
+各月份菠菜交易量.rename(columns={'\n交易量菠菜-角葉': '\n交易量菠菜-角葉:\n交易量菠菜-角葉\n菠菜交易量-角葉'}, inplace=True)
+
+# Renamed columns  菠菜交易量-進口
+各月份菠菜交易量.rename(columns={' 交易量菠菜-進口': ' 菠菜交易量-進口'}, inplace=True)
+
+# Renamed columns 菠菜交易量-角葉
+各月份菠菜交易量.rename(columns={'\n交易量菠菜-角葉:\n交易量菠菜-角葉\n菠菜交易量-角葉': '菠菜交易量-角葉'}, inplace=True)
+
+# Reordered column 菠菜交易量-角葉
+各月份菠菜交易量_columns = [col for col in 各月份菠菜交易量.columns if col != '菠菜交易量-角葉']
+各月份菠菜交易量_columns.insert(2, '菠菜交易量-角葉')
+各月份菠菜交易量 = 各月份菠菜交易量[各月份菠菜交易量_columns]
+
+# Pivoted df_open into df_open_pivot
+df_open_pivot = pd.DataFrame(data={})
+
+# Added column new-column-trwx
+df_open.insert(1, 'new-column-trwx', 0)
+
+# Set formula of new-column-trwx
+df_open['new-column-trwx'] = YEAR(df_open['TransDate'])
+
+# Changed new-column-trwx to dtype str
+df_open['new-column-trwx'] = df_open['new-column-trwx'].astype('str')
+
+# Changed Month to dtype str
+df_open['Month'] = df_open['Month'].astype('str')
+
+# Pivoted df_open into df_open_pivot
+df_open_pivot = pd.DataFrame(data={})
+
+# Renamed columns Year
+df_open.rename(columns={'new-column-trwx': 'Year'}, inplace=True)
+
+# Pivoted df_open into df_open_pivot
+tmp_df = df_open[['Trans_Quantity', 'Year']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['Year'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_open_pivot = pivot_table.reset_index()
+
+# Renamed df_open_pivot to 年度交易量
+年度交易量 = df_open_pivot
+
+# Renamed columns 交易量
+年度交易量.rename(columns={'Trans_Quantity sum': '交易量'}, inplace=True)
+
+# Pivoted df_open into df_open_pivot
+tmp_df = df_open[['MarketName', 'Trans_Quantity']].copy()
+pivot_table = tmp_df.pivot_table(
+    columns=['MarketName'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_open_pivot = pivot_table.reset_index()
+
+# Renamed df_open_pivot to 各批發市場總交易量
+各批發市場總交易量 = df_open_pivot
+
+# Pivoted df_open into 各批發市場總交易量
+tmp_df = df_open[['MarketName', 'Trans_Quantity']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['MarketName'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+各批發市場總交易量 = pivot_table.reset_index()
+
+# Sorted Trans_Quantity sum in descending order
+各批發市場總交易量 = 各批發市場總交易量.sort_values(by='Trans_Quantity sum', ascending=False, na_position='last')
+
+# Pivoted df_open into 各批發市場總交易量
+tmp_df = df_open[['MarketName', 'CropName', 'Trans_Quantity']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['MarketName', 'CropName'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+各批發市場總交易量 = pivot_table.reset_index()
+
+# Pivoted df_open into df_open_pivot
+df_open_pivot = pd.DataFrame(data={})
+
+# Pivoted df_open into 各批發市場總交易量
+tmp_df = df_open[['MarketName', 'Trans_Quantity']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['MarketName'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+各批發市場總交易量 = pivot_table.reset_index()
+
+# Sorted Trans_Quantity sum in descending order
+各批發市場總交易量 = 各批發市場總交易量.sort_values(by='Trans_Quantity sum', ascending=False, na_position='last')
+
+# Added column new-column-9xdt
+df_open.insert(1, 'new-column-9xdt', 0)
+
+# Reordered column new-column-9xdt
+df_open_columns = [col for col in df_open.columns if col != 'new-column-9xdt']
+df_open_columns.insert(6, 'new-column-9xdt')
+df_open = df_open[df_open_columns]
+
+# Renamed columns City
+df_open.rename(columns={'new-column-9xdt': 'City'}, inplace=True)
+
+# Deleted columns City
+df_open.drop(['City'], axis=1, inplace=True)
+
+# Pivoted df_open into df_open_pivot
+tmp_df = df_open[['MarketName', 'TransDate', 'Avg_Price']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['TransDate'],
+    columns=['MarketName'],
+    values=['Avg_Price'],
+    aggfunc={'Avg_Price': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_open_pivot = pivot_table.reset_index()
+
+# Added column new-column-585q
+df_open.insert(7, 'new-column-585q', 0)
+
+# Reordered column new-column-585q
+df_open_columns = [col for col in df_open.columns if col != 'new-column-585q']
+df_open_columns.insert(6, 'new-column-585q')
+df_open = df_open[df_open_columns]
+
+# Renamed columns City
+df_open.rename(columns={'new-column-585q': 'City'}, inplace=True)
+
+# Renamed columns new-column-585q
+df_open.rename(columns={'City': 'new-column-585q'}, inplace=True)
+
+# ADD a new column City  
+# define:
+# 台北:台北一、台北二
+# 新北:板橋區、三重區
+# 桃園：桃農
+# 台中：豐原區
+# 南投：南投市
+# 高雄：高雄市、鳳山
+# 屏東：屏東市
+# 台東：台東市
+# 花蓮：花蓮市
+# 雲林：西螺鎮、溪湖鎮
+# 宜蘭：宜蘭市
+df_open['City'] = df_open['MarketName'].map({'台北一': '台北', '台北二': '台北', '板橋區': '新北', '三重區': '新北', '桃農': '桃園', '豐原區': '台中', '南投市': '南投', '高雄市': '高雄', '鳳山': '高雄', '屏東市': '屏東', '台東市': '台東', '花蓮市': '花蓮', '西螺鎮': '雲林', '溪湖鎮': '雲林'})
+
+# Deleted columns new-column-585q
+df_open.drop(['new-column-585q'], axis=1, inplace=True)
+
+# Deleted columns City
+df_open.drop(['City'], axis=1, inplace=True)
+
+# ADD a new column City
+# define:
+# 台北:台北一、台北二
+# 新北:板橋區、三重區
+# 桃園：桃農
+# 台中：豐原區、台中市
+# 南投：南投市
+# 高雄：高雄市、鳳山
+# 屏東：屏東市
+# 台東：台東市
+# 花蓮：花蓮市
+# 雲林：西螺鎮、溪湖鎮
+# 宜蘭：宜蘭市
+df_open['City'] = df_open['MarketName'].map({'台北一': '台北', '台北二': '台北', '板橋區': '新北', '三重區': '新北', '桃農': '桃園', '豐原區': '台中', '台中市': '台中', '南投市': '南投', '高雄市': '高雄', '鳳山': '高雄', '屏東市': '屏東', '台東市': '台東', '花蓮市': '花蓮', '西螺鎮': '雲林', '溪湖鎮': '雲林'})
+
+# Deleted columns City
+df_open.drop(['City'], axis=1, inplace=True)
+
+# ADD a new column "City"
+# define:
+# 台北：台北一、台北二
+# 新北：板橋區、三重區
+# 桃園：桃農
+# 台中：豐原區、台中市
+# 南投：南投市
+# 高雄：高雄市、鳳山區
+# 屏東：屏東市
+# 台東：台東市
+# 花蓮：花蓮市
+# 雲林：西螺鎮、溪湖鎮
+# 宜蘭：宜蘭市
+df_open['City'] = df_open['MarketName'].map({'台北一': '台北', '台北二': '台北', '板橋區': '新北', '三重區': '新北', '桃農': '桃園', '豐原區': '台中', '台中市': '台中', '南投市': '南投', '高雄市': '高雄', '鳳山區': '高雄', '屏東市': '屏東', '台東市': '台東', '花蓮市': '花蓮', '西螺鎮': '雲林', '溪湖鎮': '雲林'})
+
+# Reordered column City
+df_open_columns = [col for col in df_open.columns if col != 'City']
+df_open_columns.insert(6, 'City')
+df_open = df_open[df_open_columns]
+
+# Pivoted df_open into df_open_pivot
+tmp_df = df_open[df_open['City'] == '台北']
+tmp_df = tmp_df[['City', 'Trans_Quantity', 'TransDate', 'CropName']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['TransDate'],
+    columns=['CropName', 'City'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['count']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_open_pivot = pivot_table.reset_index()
+
+# Renamed df_open_pivot to
+df_ = df_open_pivot
+
+# Pivoted df_open into df_
+tmp_df = df_open[df_open['City'] == '台北']
+tmp_df = tmp_df[['City', 'Trans_Quantity', 'TransDate', 'CropName']].copy()
+pivot_table = tmp_df.pivot_table(
+    index=['TransDate'],
+    columns=['CropName', 'City'],
+    values=['Trans_Quantity'],
+    aggfunc={'Trans_Quantity': ['sum']}
+)
+pivot_table = pivot_table.set_axis([flatten_column_header(col) for col in pivot_table.keys()], axis=1)
+df_ = pivot_table.reset_index()
+
+# column:Trans_Quantity sum 菠菜-進口 台北
+# IF =NaN then 0
+df_['Trans_Quantity sum 菠菜-進口 台北'].fillna(0, inplace=True)
+
+# Renamed df_ to 台北各種類菠菜交易量
+台北各種類菠菜交易量 = df_
+
+# Renamed columns 菠菜-圓葉 台北
+台北各種類菠菜交易量.rename(columns={'Trans_Quantity sum 菠菜-圓葉 台北': '菠菜-圓葉 台北'}, inplace=True)
+
+# Renamed columns 菠菜-圓葉
+台北各種類菠菜交易量.rename(columns={'菠菜-圓葉 台北': '菠菜-圓葉 '}, inplace=True)
+
+# Renamed columns 菠菜-甜菠菜
+台北各種類菠菜交易量.rename(columns={'Trans_Quantity sum 菠菜-甜菠菜 台北': '菠菜-甜菠菜 '}, inplace=True)
+
+# Renamed columns 菠菜-角葉
+台北各種類菠菜交易量.rename(columns={'Trans_Quantity sum 菠菜-角葉 台北': '菠菜-角葉 '}, inplace=True)
+
+# Renamed columns 菠菜-進口
+台北各種類菠菜交易量.rename(columns={'Trans_Quantity sum 菠菜-進口 台北': '菠菜-進口 '}, inplace=True)
+
+# Please generate a line chart
+# AVG_PRICE changes for various cropnames
+import matplotlib.pyplot as plt
+
+cropnames = df_open['CropName'].unique()
+
+for cropname in cropnames:
+    data = df_open[df_open['CropName'] == cropname]
+    plt.plot(data['TransDate'], data['Avg_Price'], label=cropname)
+
+plt.legend()
+plt.xlabel('Transaction Date')
+plt.ylabel('Average Price')
+plt.title('Average Price Changes for Various Crop Names')
+plt.show()
+
+# Formatted dataframes. View these styling objects to see the formatted dataframe
+各月份菠菜交易量_styler = 各月份菠菜交易量.style    .format("{:.0f}", subset=['菠菜交易量-圓葉', ' 菠菜交易量-甜菠菜', '菠菜交易量-角葉', ' 菠菜交易量-進口'])
+台北各種類菠菜交易量_styler = 台北各種類菠菜交易量.style    .format("{:.0f}", subset=['菠菜-圓葉 ', '菠菜-甜菠菜 ', '菠菜-角葉 ', '菠菜-進口 '])
